@@ -7,6 +7,8 @@
 
 import numpy as np
 from operator import itemgetter
+from scipy.cluster import hierarchy
+import matplotlib.pyplot as plt
 
 ######################################################
 # LECTURE DES DONNEES                                #
@@ -86,7 +88,7 @@ for key in data.keys():
 
 
 ######################################################
-# MATRICE DE DISTANCE ET CLUSTERING                  #
+# MATRICE DES GOTERMS                                #
 ###################################################### 
 '''
 matrice binaire contenant pour chaque proteine (ligne) la presence ou l'absence de chaque goterm (colonne)
@@ -95,6 +97,7 @@ matrice binaire contenant pour chaque proteine (ligne) la presence ou l'absence 
 dimCol = len(go_list)
 dimRow = len(data)
 
+'''
 m = []
 
 for prot in data:
@@ -110,6 +113,7 @@ print "matrice created successfully\n"
 
 print "dimensions expected: ",dimRow,"/",dimCol
 print "dimensions obtained: ",len(m),"/",len(m[0]),"\n"
+'''
 
 '''
 Calcul du pourcentage de representativite de chaque GoTerm pour voir si on peut supprimer certaines colonnes peu informatives
@@ -140,12 +144,42 @@ for k,v in gt[:5]:
 
 
 '''
-On peut choisir arbitrairement de ne garder que les Goterms les plus representes a partir d'un seuil de 1% 
-cad les Goterms presents dans 60 proteines minimum
+On peut choisir arbitrairement de ne garder que les 100 Goterms les plus representes cad les Goterms presents dans 60 proteines minimum (environs 1% de représentativité) le max etant 23%...
 '''
 
+bestGos = []
+
+for k,v in gt[:100]:
+    bestGos.append(k)
+  
+mbest = []    
 
 
+for prot in data:
+    row = []
+    for goterm in bestGos:
+        if goterm in data[prot]["GoTerms"]:
+            row.append(1.0)
+        else:
+            row.append(0.0)        
+    mbest.append(row)
+
+print "\nmatrice created successfully\n"
 
 
+print "dimensions expected: ",len(data),"/",len(bestGos)
+print "dimensions obtained: ",len(mbest),"/",len(mbest[0]),"\n"
+
+######################################################
+# MATRICE DE DISTANCE ET CLUSTERING                  #
+######################################################
+
+
+clust = hierarchy.linkage(mbest,'average')
+
+plt.figure()
+
+dn = hierarchy.dendrogram(clust)
+
+plt.show()
 
