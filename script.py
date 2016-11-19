@@ -144,7 +144,7 @@ for k,v in gt[:5]:
 
 
 '''
-On peut choisir arbitrairement de ne garder que les 100 Goterms les plus representes cad les Goterms presents dans 60 proteines minimum (environs 1% de représentativité) le max etant 23%...
+On peut choisir arbitrairement de ne garder que les 100 Goterms les plus representes cad les Goterms presents dans 60 proteines minimum (environs 1% de representativite) le max etant 23%...
 '''
 
 bestGos = []
