@@ -16,6 +16,9 @@ La fonction des kmeans est celle de Scipy (librairie), elle prend en input un ar
 Et retourne (entre autres) un array avec des données sur le clusters: array([1, 1, 1, ..., 1, 0, 1]
 label[i] is the code or index of the centroid the i’th observation is closest to.
 
+
+blabla
+
 """
 
 
