@@ -80,6 +80,8 @@ for line in fic.readlines():
         
 fic.close()
 
+print data['P0CW41']
+
 # suppression des proteines sans goTerms
 
 for key in data.keys():
