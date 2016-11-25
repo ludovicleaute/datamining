@@ -1,3 +1,5 @@
+#coding:utf-8
+
 """
 
 Example de test de l'algo des kmeans. 
@@ -39,7 +41,9 @@ def create_mass_length_array():
 			break
 	    
 		line_tmp = line.rstrip().split('\t')
-		list_tmp.append( [ float(line_tmp[1]) ,  float(line_tmp[2]) ] )
+		x = line_tmp[1].replace(",",".")
+		y = line_tmp[2].replace(",",".")
+		list_tmp.append( [ float(x) ,  float(y) ] )
 
 	f.close()
 
@@ -49,7 +53,7 @@ def create_mass_length_array():
 def launch_kmeans(array_mass_length):
 
 	whitened = whiten(array_mass_length)
-	book = array((whitened[0],whitened[2]))
+	book = array((whitened[0],whitened[2], whitened[3]))	
 
 	k = kmeans2(whitened,book)
 
