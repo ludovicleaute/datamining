@@ -7,9 +7,9 @@ from scipy.cluster.vq import vq, kmeans2, whiten
 
 - faire structure de données avec tout (done)
 - faire tableau 2D avec nom prot et [taille+longueur] (done)
-- calculer moyenne
-- faire une liste de cluster avec prot à l'intérieur 
-- dictionnaire: pour un cluster, liste de protéine? 
+- faire une liste de cluster avec prot à l'intérieur (done)
+- calculer moyenne et stat dessus, ça peut nous permettre de trouver des outliers.... z-score permet de dire si une donnée est utilisable ou non. A FAIRE ABSOLUMENT 
+
 
 
 Example de test de l'algo des kmeans. 
@@ -36,7 +36,7 @@ blabla
 
 data = {}
 go_list = [] #liste de tous les goterms existants dans le jeu de donnees
-k = 300 # number of cluster of kmeans method 
+k = 4 # number of cluster of kmeans method 
 
 file_name = "uniprot.tab"
 
@@ -114,7 +114,7 @@ def launch_kmeans(array_mass_length):
 
 	# Whithened normalize data...je sais pas ce que ça veut dire mais il faut le faire
 	whitened = whiten(array_mass_length)
-	kmean = kmeans2(whitened,k)
+	kmean = kmeans2(whitened,k, 10, 1e-05, 'points')
 
 	return kmean
 
@@ -188,6 +188,10 @@ array_mass_length =
 
 """
 
+for i in range(len(array_mass_length)):
+	if array_mass_length[i][0] < 0 or array_mass_length[i][1] < 0:
+		print "ok"
+
 table = create_2D_table()
 
 
@@ -207,6 +211,7 @@ table =
 kmean = launch_kmeans(array_mass_length)
 
 centroids = kmean[0]
+print centroids
 
 """
 centroids = 
@@ -227,4 +232,4 @@ label[i] is the code or index of the centroid the i’th observation is closest 
 """
 
 cluster_with_protein_name = retrieve_protein(table, clusters_with_nb)
-print cluster_with_protein_name
+#print cluster_with_protein_name
