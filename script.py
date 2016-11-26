@@ -5,19 +5,17 @@
 # PACKAGES                                           #
 ######################################################
 
-import numpy as np
+import sys,numpy as np,pandas as pd
 from operator import itemgetter
+from scipy.cluster.vq import vq, kmeans2, whiten
 from scipy.cluster import hierarchy
 import matplotlib.pyplot as plt
 
 ######################################################
-# LECTURE DES DONNEES                                #
+# VARIABLES GLOBALES                                 #
 ######################################################
 
-name = "uniprot.tab" 
-fic = open(name,"r")
-headers = fic.readline().rstrip().split('\t') #noms des colonnes
-
+name = sys.argv[1]
 
 ######################################################
 # PARAMETRES LES PLUS REPRESENTES                    #
@@ -25,31 +23,34 @@ headers = fic.readline().rstrip().split('\t') #noms des colonnes
 ''' creation d'un dictionnaire qui contient les headers comme mot cles.
 calcule du pourcentage d'information apporte par un parametre sur l'ensemble des proteines '''
 
-'''
-dico={}
-cptline = 0.0
-   
-for entry in headers:
-    dico[entry]=0
-for line in fic.readlines():
-    if not line :
-        break
-    cptline +=1.0
-    prot = line.rstrip().split('\t')
-    for nb_col in range(len(prot)):
-        if prot[nb_col] != '':
-            dico[ headers[nb_col] ] += 1.0
-            
-for i in dico.keys():
-    dico[i]= (dico[i]/cptline) * 100
-    
-fic.close()
+def representativity():
+		
+	fic = open(name,"r") # ouverture du fichier pour recuperer les headers en global
+	headers = fic.readline().rstrip().split('\t')
+	dico = {}
+	cptline = 0.0
+	   
+	for entry in headers:
+		dico[entry]=0
+	for line in fic.readlines():
+		if not line :
+		    break
+		cptline +=1.0
+		prot = line.rstrip().split('\t')
+		for nb_col in range(len(prot)):
+		    if prot[nb_col] != '':
+		        dico[ headers[nb_col] ] += 1.0
+		        
+	for i in dico.keys():
+		dico[i]= (dico[i]/cptline) * 100
+		
+	fic.close()
+	
+	return dico,headers,cptline
+	 
+#>> {'Entry': 100.0, 'Length': 100.0, 'Mass': 100.0, 'GoBiologicalProcess': ['...'], 'GoCellularComponent': ['...'], 'GOMolecularFunction': ['...']}
 
-print(dico)
 
-#>> {'Entry': 100.0, 'Length': 100.0, 'Mass': 100.0, 'Gene ontology IDs': 88.46897783067996}
-
-'''
 
 ######################################################
 # MISE EN FORME DU JEU DE DONNEE                     #
@@ -57,36 +58,148 @@ print(dico)
 ''' 
 On implemente un dictionnaire qui contient en entrees toutes les proteines.
 chaque prot est un dictionnaire contenant les valeurs de chaque parametre
-{PROT1 : { 'Mass': '12', 'Length': '12', 'GoTerms' :[G0-0000001,GO-0000002] }, PROT2 :{...}; ...}
+
+{ 
+  
+  PROT1 : { 'Length': '397',
+            'Mass': '45,318',
+            'GoBiologicalProcess': ['fructose 2,6-bisphosphate metabolic process [GO:0006003]'],
+            'GoCellularComponent': ['cytoplasm [GO:0005737]'], 
+            'GOMolecularFunction': ['6-phosphofructo-2-kinase activity [GO:0003873]', 'ATP binding [GO:0005524]']   ,
+
+  PROT2 : { ... }
+}
+
+
 '''
 
-data = {}
-go_list = [] #liste de tous les goterms existants dans le jeu de donnees
+def get_datas():
+	
+	fic = open(name,"r") # ouverture du fichier pour recuperer les headers en global
+	headers = fic.readline().rstrip().split('\t')
+	
+	data = {}
+	go_cell = [] 
+	go_mol = []
+	go_bio = []
 
-for line in fic.readlines():
-	if not line:
-		break
-	prot = line.rstrip().split('\t')
-	data[prot[0]] = {}
-	for nb_col in range(1,len(prot)):
-		if headers[nb_col] == "Gene ontology IDs":
-			gos = prot[nb_col].split('; ')
-			data[prot[0]]["GoTerms"] = gos
-			for go in gos:
-				if go not in go_list:
-					go_list.append(go)
-		else:
-			data[prot[0]][headers[nb_col]]=prot[nb_col]
-        
-fic.close()
+	for line in fic.readlines():
+		if not line:
+		    break
+		prot = line.rstrip().split('\t')
+		data[prot[0]] = {}
 
-print data['P0CW41']
+		for nb_col in range(1,len(prot)):
 
-# suppression des proteines sans goTerms
+			# Mass
+			if headers[nb_col] == "Mass":
+				mass = prot[nb_col]
+				mass = mass.replace(",","")
+				data[prot[0]]["Mass"] = float(mass)
+                        # Length
+			elif headers[nb_col] == "Length":
+				length = prot[nb_col]
+				length = length.replace(",","")
+				data[prot[0]]["Length"] = float(length)
+			
+			# Gene ontology (cellular component)
+		        elif headers[nb_col] == "Gene ontology (cellular component)":
+		    	        gos = prot[nb_col].split('; ')
+		                data[prot[0]]["GoCellularComponent"] = gos
+		                for go in gos:
+		                        if go not in go_cell:
+		                                go_cell.append(go)
+			# Gene ontology (molecular function)
+		        elif headers[nb_col] == "Gene ontology (molecular function)":
+		                gos = prot[nb_col].split('; ')
+		                data[prot[0]]["GoMolecularFunction"] = gos
+		                for go in gos:
+		                        if go not in go_mol:
+		                                go_mol.append(go)
 
-for key in data.keys():
-	if len(data[key]) != len(headers)-1:
-		del data[key]
+		        # Gene ontology (biological process)
+		        elif headers[nb_col] == "Gene ontology (biological process)":
+		                gos = prot[nb_col].split('; ')
+		                data[prot[0]]["GoBiologicalProcess"] = gos
+		                for go in gos:
+                                        if go not in go_bio:
+		                                go_bio.append(go)
+
+		        else:
+			        data[prot[0]][headers[nb_col]]=prot[nb_col]
+		    
+	fic.close()
+
+
+	# suppression des proteines sans goTerms
+
+	for key in data.keys():
+		if len(data[key]) != len(headers)-1:
+			del data[key]
+	
+	return data,headers,go_cell,go_mol,go_bio
+
+######################################################
+# KMEANS LENGTH MASS                                 #
+###################################################### 
+'''
+Mass_length_array is an array containing coordinates of each prot (as x = Mass and y = Length)
+'''
+def create_mass_length_array():
+
+	list_tmp = []
+
+	for prot in data:	    
+		x = data[prot]['Mass']
+		y = data[prot]['Length']
+		list_tmp.append( [ x ,  y ] )
+
+	return np.array( list_tmp )
+	
+
+def launch_kmeans(array_mass_length,k):
+
+	whitened = whiten(array_mass_length) # normalisation des donnees division par l'ecart type en colonne
+	centroids,clusterIndex = kmeans2(whitened, k, iter=100,minit='points')
+
+	return centroids,clusterIndex
+
+'''
+This table will allow to retrieve the protein associated to each point of the kmeans method
+'''
+def create_2D_table(data):
+	table = []
+	
+	i = 0
+
+	for prot in data:
+
+		table.append([])
+
+		mass = data[prot]['Mass']
+		length = data[prot]['Length']
+
+		table[i].append(prot)
+		table[i].append( [ mass , length ] )
+
+		i += 1
+
+	return table
+
+
+def retrieve_protein(table, clusters_with_nb,k):
+	clusters_with_name = [] 
+
+	for i in range(k):
+		clusters_with_name.append([])
+
+	for i in range(len(clusters_with_nb)):
+		protein_name = table[i][0]
+		clusters_with_name[ clusters_with_nb[i] ].append(protein_name)
+
+	return clusters_with_name
+
+
 
 
 ######################################################
@@ -96,58 +209,93 @@ for key in data.keys():
 matrice binaire contenant pour chaque proteine (ligne) la presence ou l'absence de chaque goterm (colonne)
 '''
 
-dimCol = len(go_list)
-dimRow = len(data)
 
-'''
-m = []
+def matrice_goterm(dico,go_type,go_list):
+	matrice = []
+	for prot in dico:
+		row = []
+		for goterm in go_list:
+		    if goterm in dico[prot][go_type]:
+		        row.append(1)
+		    else:
+		        row.append(0)        
+		matrice.append(row)
 
-for prot in data:
-    row = []
-    for goterm in go_list:
-        if goterm in data[prot]["GoTerms"]:
-            row.append(1)
-        else:
-            row.append(0)        
-    m.append(row)
+	print "matrice created successfully\n"
+	print "dimensions expected: ",len(dico),"/",len(go_list)
+	print "dimensions obtained: ",len(matrice),"/",len(matrice[0]),"\n"
 
-print "matrice created successfully\n"
+	return matrice
 
-print "dimensions expected: ",dimRow,"/",dimCol
-print "dimensions obtained: ",len(m),"/",len(m[0]),"\n"
-'''
 
+######################################################
+# REPRESENTATIVITE  DES GOTERMS                      #
+###################################################### 
 '''
 Calcul du pourcentage de representativite de chaque GoTerm pour voir si on peut supprimer certaines colonnes peu informatives
 le calcul de la matrice de dissimilarite sera moins long
 '''
 
-gTerms = {}
+def go_representativite(dico,go_type,go_list):
+	gTerms = {}
 
-for go in go_list:
-    gTerms[go]=0.0
-for prot in data:
-    for go in data[prot]["GoTerms"]:
-        if go != '':
-            gTerms[go] += 1
+	for go in go_list:
+		gTerms[go]=0.0
+	for prot in dico:
+		for go in dico[prot][go_type]:
+		    if go != '':
+		        gTerms[go] += 1
+	for i in gTerms.keys():
+		gTerms[i]= (gTerms[i]/len(dico)) * 100
+	
+	gt = gTerms.items()
+	gt.sort(key=itemgetter(1),reverse=True)
+	return gTerms,gt
 
-for i in gTerms.keys():
-    gTerms[i]= (gTerms[i]/dimCol) * 100
 
-gt = gTerms.items()
-gt.sort(key=itemgetter(1),reverse=True)
+######################################################
+# MAIN                                               #
+######################################################
+
+# construction du jeu de donnees
+data,headers,go_cell,go_mol,go_bio = get_datas()
+
+# clustering des kmeans sur le poids et la taille
+array_mass_length = create_mass_length_array()
+table = create_2D_table(data)
+centroids,clusterIndex = launch_kmeans(array_mass_length,6)
+
+cluster_with_protein_name = retrieve_protein(table, clusterIndex,6)
+
+# nombre de proteines par cluster
+
+for i in range(6):
+	print "nb proteines cluster",i," : ",len(cluster_with_protein_name[i])
+
+# Un peu de visualisation 
+dat = pd.DataFrame(whiten(array_mass_length))	
+coord = dat.as_matrix(columns=[0,1])
 
 
-print "Go-Terms representativity : \n"
+plt.figure(figsize=(10, 10), dpi=100)
+plt.scatter(coord[:,0], coord[:,1], c=clusterIndex, s=25, cmap="winter")
+plt.scatter(centroids[:,0],centroids[:,1],c="r",s=50)
+plt.show()
+
+# representativite des goterms
+gterms,gt = go_representativite(data,"GoCellularComponent",go_cell)
+
+print "\nGo-Terms representativity :\n"
 
 for k,v in gt[:5]:
     print k 
     print v,"%"
 
+print "\n"
 
 '''
+
 On peut choisir arbitrairement de ne garder que les 100 Goterms les plus representes cad les Goterms presents dans 60 proteines minimum (environs 1% de representativite) le max etant 23%...
-'''
 
 bestGos = []
 
@@ -160,7 +308,8 @@ mbest = []
 for prot in data:
     row = []
     for goterm in bestGos:
-        if goterm in data[prot]["GoTerms"]:
+        if goterm in data[prot][matrice_term]: 
+
             row.append(1.0)
         else:
             row.append(0.0)        
@@ -169,12 +318,9 @@ for prot in data:
 print "\nmatrice created successfully\n"
 
 
+
 print "dimensions expected: ",len(data),"/",len(bestGos)
 print "dimensions obtained: ",len(mbest),"/",len(mbest[0]),"\n"
-
-######################################################
-# MATRICE DE DISTANCE ET CLUSTERING                  #
-######################################################
 
 
 clust = hierarchy.linkage(mbest,'average')
@@ -184,4 +330,4 @@ plt.figure()
 dn = hierarchy.dendrogram(clust)
 
 plt.show()
-
+'''
