@@ -29,8 +29,6 @@ Et retourne (entre autres) un array avec des données sur le clusters: array([1,
 label[i] is the code or index of the centroid the i’th observation is closest to.
 
 
-blabla
-
 """
 
 
@@ -60,14 +58,14 @@ def create_data():
             # Mass
 			if headers[nb_col] == "Mass":
 				gos = prot[nb_col]
-				gos = gos.replace(",",".")
+				gos = gos.replace(",","")
 				data[prot[0]]["Mass"] = float(gos)
 
 
             # Length
 			if headers[nb_col] == "Length":
 				gos = prot[nb_col]
-				gos = gos.replace(",",".")
+				gos = gos.replace(",","")
 				data[prot[0]]["Length"] = float(gos)
 
             # Gene ontology (cellular component)
@@ -114,7 +112,7 @@ def launch_kmeans(array_mass_length):
 
 	# Whithened normalize data...je sais pas ce que ça veut dire mais il faut le faire
 	whitened = whiten(array_mass_length)
-	kmean = kmeans2(whitened,k, 10, 1e-05, 'points')
+	kmean = kmeans2(whitened,k, 100, 1e-05, 'points')
 
 	return kmean
 
@@ -203,7 +201,7 @@ table =
 
 ]
 """
-for i in range(1,500):
+for i in range(1,10):
 	k = i
 	kmean = launch_kmeans(array_mass_length)
 
