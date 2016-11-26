@@ -188,10 +188,6 @@ array_mass_length =
 
 """
 
-for i in range(len(array_mass_length)):
-	if array_mass_length[i][0] < 0 or array_mass_length[i][1] < 0:
-		print "ok"
-
 table = create_2D_table()
 
 
@@ -207,11 +203,14 @@ table =
 
 ]
 """
+for i in range(1,500):
+	k = i
+	kmean = launch_kmeans(array_mass_length)
 
-kmean = launch_kmeans(array_mass_length)
-
-centroids = kmean[0]
-print centroids
+	centroids = kmean[0]
+	for j in range(len(centroids)):
+		if centroids[j][0]<0 or centroids[j][1]<0:
+			print "ok"
 
 """
 centroids = 
