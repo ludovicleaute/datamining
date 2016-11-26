@@ -33,15 +33,65 @@ label[i] is the code or index of the centroid the i’th observation is closest 
 
 
 data = {}
-go_list = [] #liste de tous les goterms existants dans le jeu de donnees
+go_cell = [] 
+go_mol = []
+go_bio = []
 k = 4 # number of cluster of kmeans method 
 
-file_name = "uniprot.tab"
+file_name = "data.csv"
 
 
 # data will associate to each protein, its properties (Mass, Length, GO terms...)
 def create_data():
 	
+	fic = open(file_name,"r")
+
+	headers = fic.readline().rstrip().split('\t') #noms des colonnes
+	
+	for line in fic.readlines():
+		if not line:
+			break
+		prot = line.rstrip().split('\t')
+		data[prot[0]] = {}
+
+		for nb_col in range(1,len(prot)):
+
+
+			# Gene ontology (cellular component)
+			if headers[nb_col] == "Gene ontology (cellular component)":
+				gos = prot[nb_col].split('; ')
+				data[prot[0]]["GoCellularComponent"] = gos
+				for go in gos:
+					if go not in go_cell:
+						go_cell.append(go)
+
+
+			# Gene ontology (molecular function)
+			elif headers[nb_col] == "Gene ontology (molecular function)":
+				gos = prot[nb_col].split('; ')
+				data[prot[0]]["GoMolecularFunction"] = gos
+				for go in gos:
+					if go not in go_mol:
+						go_mol.append(go)
+ 
+
+			# Gene ontology (biological process)
+			elif headers[nb_col] == "Gene ontology (biological process)":
+				gos = prot[nb_col].split('; ')
+				data[prot[0]]["GoBiologicalProcess"] = gos
+				for go in gos:
+					if go not in go_bio:
+						go_bio.append(go)
+
+
+			else:
+				data[prot[0]][headers[nb_col]]=prot[nb_col]
+
+	fic.close()
+
+
+
+	"""
 	fic = open(file_name,"r")
 
 	headers = fic.readline().rstrip().split('\t') #noms des colonnes
@@ -93,7 +143,7 @@ def create_data():
 				for go in gos:
 					if go not in go_list:
 						go_list.append(go)
-
+	"""
 
 # Mass_length_array is an array containing coordinates of each prot (as x = Mass and y = Length)
 def create_mass_length_array():
@@ -101,8 +151,8 @@ def create_mass_length_array():
 	list_tmp = []
 
 	for prot in data:	    
-		x = data[prot]['Length']
-		y = data[prot]['Mass']
+		x = float(data[prot]['Length'].replace(",",""))
+		y = float(data[prot]['Mass'].replace(",",""))
 		list_tmp.append( [ x ,  y ] )
 
 	return array( list_tmp )
