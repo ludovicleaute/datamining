@@ -8,7 +8,7 @@ Le projet est écrit en python 2.7.
 
 afin de visualiser les résultats il suffit d'executer dans un terminal la commande :
 
-> python script.py
+> python script.py <fichier.tab>
 
 # prenez bien soins d'installer les différents packages de python nécessaires et détaillés au début du fichier script.py
 
