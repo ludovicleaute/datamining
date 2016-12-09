@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 ######################################################
 
 name = sys.argv[1]
+k = int(sys.argv[2]) # nombre de clusters kmeans
 
 ######################################################
 # PARAMETRES LES PLUS REPRESENTES                    #
@@ -263,15 +264,15 @@ data,headers,go_cell,go_mol,go_bio = get_datas()
 # clustering des kmeans sur le poids et la taille
 array_mass_length = create_mass_length_array()
 table = create_2D_table(data)
-centroids,clusterIndex = launch_kmeans(array_mass_length,6)
+centroids,clusterIndex = launch_kmeans(array_mass_length,k)
 
-cluster_with_protein_name = retrieve_protein(table, clusterIndex,6)
+cluster_with_protein_name = retrieve_protein(table, clusterIndex,k)
 
-# nombre de proteines par cluster
+# nombre de proteines par cluster kmeans
 
-for i in range(6):
+for i in range(k):
 	print "nb proteines cluster",i," : ",len(cluster_with_protein_name[i])
-
+'''
 # Un peu de visualisation 
 dat = pd.DataFrame(whiten(array_mass_length))	
 coord = dat.as_matrix(columns=[0,1])
@@ -292,42 +293,33 @@ for k,v in gt[:5]:
     print v,"%"
 
 print "\n"
-
 '''
-
-On peut choisir arbitrairement de ne garder que les 100 Goterms les plus representes cad les Goterms presents dans 60 proteines minimum (environs 1% de representativite) le max etant 23%...
-
-bestGos = []
-
-for k,v in gt[:100]:
-    bestGos.append(k)
   
-mbest = []    
 
-
-for prot in data:
-    row = []
-    for goterm in bestGos:
-        if goterm in data[prot][matrice_term]: 
-
-            row.append(1.0)
-        else:
-            row.append(0.0)        
-    mbest.append(row)
-
+# clustering hierarchique en fonction des compartiments
+matrixdeouf = []
+for cluster in cluster_with_protein_name:
+	scoresMat = []
+	for protein in cluster:
+		row =[]
+	   	for goterm in go_cell:
+	   		if goterm in data[protein]["GoCellularComponent"]: 
+				row.append(1.0)
+			else:
+				row.append(0.0)
+		scoresMat.append(row)
+	matrixdeouf.append(scoresMat)
 print "\nmatrice created successfully\n"
 
+c =1
+for mat in matrixdeouf:
+	clust = hierarchy.linkage(mat,'average')
+
+	print "done matrix number ",c
+	c+=1
 
 
-print "dimensions expected: ",len(data),"/",len(bestGos)
-print "dimensions obtained: ",len(mbest),"/",len(mbest[0]),"\n"
 
+cuted = hierarchy.cut_tree(clust,height=3.0)
+print cuted,len(cuted)
 
-clust = hierarchy.linkage(mbest,'average')
-
-plt.figure()
-
-dn = hierarchy.dendrogram(clust)
-
-plt.show()
-'''
