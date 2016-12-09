@@ -212,6 +212,8 @@ def retrieve_properties(un_cluster, param):
 			terme_liste = data[prot][param]
 			for terme in terme_liste:
 				terme = terme.replace("of ", "")
+				terme = terme.replace("from ", "")
+				terme = terme.replace("  ", "")
 				terme_tab = terme.split(" ")
 				for mot in terme_tab:
 					if mot not in dico.keys():
