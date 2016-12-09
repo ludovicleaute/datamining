@@ -213,7 +213,9 @@ def retrieve_properties(un_cluster, param):
 			for terme in terme_liste:
 				terme = terme.replace("of ", "")
 				terme = terme.replace("from ", "")
-				terme = terme.replace("  ", "")
+				terme = terme.replace("to ", "")
+				terme = terme.replace("  ", " ")
+				terme = re.sub(r"[GO:*]", "", terme)
 				terme_tab = terme.split(" ")
 				for mot in terme_tab:
 					if mot not in dico.keys():
@@ -318,4 +320,9 @@ label[i] is the code or index of the centroid the i’th observation is closest 
 cluster_with_protein_name = retrieve_protein(table, clusters_with_nb)
 #print cluster_with_protein_name
 
-print retrieve_properties(cluster_with_protein_name[0], "GoBiologicalProcess")
+for i in range(len(cluster_with_protein_name)):
+	print "CLUSTER ", i
+	print "Bio process: ", retrieve_properties(cluster_with_protein_name[i], "GoBiologicalProcess")
+	print "Cell comp: ", retrieve_properties(cluster_with_protein_name[i], "GoCellularComponent")
+	print "Mol function: ", retrieve_properties(cluster_with_protein_name[i], "GOMolecularFunction")
+	print "\n\n"
