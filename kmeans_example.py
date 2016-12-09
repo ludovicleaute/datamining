@@ -201,6 +201,41 @@ def retrieve_protein(table, clusters_with_nb):
 
 
 
+def retrieve_properties(un_cluster, param):
+	first = ""
+	second = ""
+	third = ""
+
+	dico = {}
+	for prot in un_cluster:
+		if param in data[prot].keys():
+			terme_liste = data[prot][param]
+			for terme in terme_liste:
+				terme = terme.replace("of ", "")
+				terme_tab = terme.split(" ")
+				for mot in terme_tab:
+					if mot not in dico.keys():
+						dico[mot] = 1
+					else: 
+						dico[mot] = dico[mot] + 1
+	max1 = 0
+	max2 = 0
+	max3 = 0
+
+	for mot in dico.keys():
+		if dico[mot] > max1:
+			max1 = dico[mot]
+			first = mot
+		elif dico[mot] > max2:
+			max2 = dico[mot]
+			second = mot
+		elif dico[mot] > max3:
+			max3 = dico[mot]
+			third = mot
+
+	return first, second, third
+
+
 
 
 
@@ -280,3 +315,5 @@ label[i] is the code or index of the centroid the i’th observation is closest 
 
 cluster_with_protein_name = retrieve_protein(table, clusters_with_nb)
 #print cluster_with_protein_name
+
+print retrieve_properties(cluster_with_protein_name[0], "GoBiologicalProcess")
