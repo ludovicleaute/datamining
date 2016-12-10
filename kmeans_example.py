@@ -132,7 +132,7 @@ def create_data():
             # Gene ontology (molecular function)
 			if headers[nb_col] == "Gene ontology (molecular function)":
 				gos = prot[nb_col].split('; ')
-				data[prot[0]]["GOMolecularFunction"] = gos
+				data[prot[0]]["GoMolecularFunction"] = gos
 				for go in gos:
 					if go not in go_list:
 						go_list.append(go)
@@ -260,7 +260,7 @@ data =
             'Mass': 45.318,
             'GoBiologicalProcess': ['fructose 2,6-bisphosphate metabolic process [GO:0006003]', 'fructose metabolic process [GO:0006000]', 'regulation of glycolytic process [GO:0006110]'], 
             'GoCellularComponent': ['cytoplasm [GO:0005737]'], 
-            'GOMolecularFunction': ['6-phosphofructo-2-kinase activity [GO:0003873]', 'ATP binding [GO:0005524]']   ,
+            'GoMolecularFunction': ['6-phosphofructo-2-kinase activity [GO:0003873]', 'ATP binding [GO:0005524]']   ,
 
   PROT2 : { ... }
 }
@@ -324,14 +324,12 @@ label[i] is the code or index of the centroid the i’th observation is closest 
 """
 
 clusters_with_protein_name = retrieve_protein(table, clusters_with_nb)
-#print cluster_with_protein_name
 
 for i in range(len(clusters_with_protein_name)):
 	print "CLUSTER ", i
+	print "Nombre de protéines dans le cluster: ", statistics(clusters_with_protein_name[i])
 	print "Bio process: ", retrieve_properties(clusters_with_protein_name[i], "GoBiologicalProcess")
 	print "Cell comp: ", retrieve_properties(clusters_with_protein_name[i], "GoCellularComponent")
-	print "Mol function: ", retrieve_properties(clusters_with_protein_name[i], "GOMolecularFunction")
+	print "Mol function: ", retrieve_properties(clusters_with_protein_name[i], "GoMolecularFunction")
 	print "\n\n"
 
-
-statistics(clusters_with_protein_name[i])
