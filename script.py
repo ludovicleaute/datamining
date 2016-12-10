@@ -8,7 +8,7 @@
 import sys,numpy as np,pandas as pd
 from operator import itemgetter
 from scipy.cluster.vq import vq, kmeans2, whiten
-from scipy.cluster import hierarchy
+from scipy.cluster.hierarchy import linkage , fcluster, dendrogram, cut_tree
 import matplotlib.pyplot as plt
 
 ######################################################
@@ -297,29 +297,36 @@ print "\n"
   
 
 # clustering hierarchique en fonction des compartiments
-matrixdeouf = []
-for cluster in cluster_with_protein_name:
-	scoresMat = []
-	for protein in cluster:
-		row =[]
-	   	for goterm in go_cell:
-	   		if goterm in data[protein]["GoCellularComponent"]: 
-				row.append(1.0)
-			else:
-				row.append(0.0)
-		scoresMat.append(row)
-	matrixdeouf.append(scoresMat)
+
+
+scoresMat = []
+for protein in cluster_with_protein_name[0]:
+	row =[]
+   	for goterm in go_cell:
+   		if goterm in data[protein]["GoCellularComponent"]: 
+			row.append(1.0)
+		else:
+			row.append(0.0)
+	scoresMat.append(row)
+
 print "\nmatrice created successfully\n"
 
-c =1
-for mat in matrixdeouf:
-	clust = hierarchy.linkage(mat,'average')
+dist = linkage(scoresMat,'complete')
 
-	print "done matrix number ",c
-	c+=1
+assignement = fcluster(dist,3,'distance')
 
 
 
-cuted = hierarchy.cut_tree(clust,height=3.0)
-print cuted,len(cuted)
+cluster_output = pd.DataFrame({'prot':cluster_with_protein_name[0] , 'cluster':assignement})
 
+print cluster_output[:20]
+
+res = {}
+for n in assignement:
+	res[n]=0
+for n in assignement:
+	res[n]+=1
+
+print [(k,v) for k,v in res.items() if v == max([v for v in res.values()])] 
+
+print max([v for v in res.values()])
