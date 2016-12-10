@@ -2,6 +2,8 @@
 
 from numpy import array
 from scipy.cluster.vq import vq, kmeans2, whiten
+import sys
+import re
 
 """
 
@@ -38,7 +40,7 @@ go_mol = []
 go_bio = []
 k = 4 # number of cluster of kmeans method 
 
-file_name = "data.csv"
+file_name = sys.argv[1]
 
 
 # data will associate to each protein, its properties (Mass, Length, GO terms...)
@@ -240,6 +242,10 @@ def retrieve_properties(un_cluster, param):
 	return first, second, third
 
 
+def statistics(cluster):
+	nb_prot = len(cluster)
+	return nb_prot
+
 
 
 
@@ -317,12 +323,15 @@ label[i] is the code or index of the centroid the i’th observation is closest 
 
 """
 
-cluster_with_protein_name = retrieve_protein(table, clusters_with_nb)
+clusters_with_protein_name = retrieve_protein(table, clusters_with_nb)
 #print cluster_with_protein_name
 
-for i in range(len(cluster_with_protein_name)):
+for i in range(len(clusters_with_protein_name)):
 	print "CLUSTER ", i
-	print "Bio process: ", retrieve_properties(cluster_with_protein_name[i], "GoBiologicalProcess")
-	print "Cell comp: ", retrieve_properties(cluster_with_protein_name[i], "GoCellularComponent")
-	print "Mol function: ", retrieve_properties(cluster_with_protein_name[i], "GOMolecularFunction")
+	print "Bio process: ", retrieve_properties(clusters_with_protein_name[i], "GoBiologicalProcess")
+	print "Cell comp: ", retrieve_properties(clusters_with_protein_name[i], "GoCellularComponent")
+	print "Mol function: ", retrieve_properties(clusters_with_protein_name[i], "GOMolecularFunction")
 	print "\n\n"
+
+
+statistics(clusters_with_protein_name[i])
