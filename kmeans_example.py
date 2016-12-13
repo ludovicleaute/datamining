@@ -35,10 +35,11 @@ label[i] is the code or index of the centroid the i’th observation is closest 
 
 
 data = {}
+dico = {}
 go_cell = [] 
 go_mol = []
 go_bio = []
-k = 4 # number of cluster of kmeans method 
+k = 5 # number of cluster of kmeans method 
 
 file_name = sys.argv[1]
 
@@ -217,7 +218,7 @@ def retrieve_properties(un_cluster, param):
 				terme = terme.replace("from ", "")
 				terme = terme.replace("to ", "")
 				terme = terme.replace("  ", " ")
-				terme = re.sub(r"[GO:*]", "", terme)
+				terme = re.sub(r"[*]", "", terme)
 				terme_tab = terme.split(" ")
 				for mot in terme_tab:
 					if mot not in dico.keys():
@@ -239,13 +240,158 @@ def retrieve_properties(un_cluster, param):
 			max3 = dico[mot]
 			third = mot
 
-	return first, second, third
+	termes_representatifs = [first, second, third]
+
+	return termes_representatifs
 
 
 def statistics(cluster):
 	nb_prot = len(cluster)
-	return nb_prot
+	somme_mass = 0
+	somme_length = 0
+	n = 0
 
+	for prot in cluster:
+		somme_mass = somme_mass + float(data[prot]['Mass'].replace(',','')) 
+		somme_length = somme_length + float(data[prot]['Length'].replace(',','')) 
+		n = n + 1
+
+	moyenne_mass = somme_mass / n
+	moyenne_length = somme_length / n
+
+	return nb_prot, moyenne_mass, moyenne_length
+
+
+def creer_arbre_vide(racine, cluster, ett = None):
+	sommets = [racine]
+	fils = {racine: []}
+	pere = {racine: None}
+	etiquettes = { racine: ett }
+	liste_proteine = {racine: cluster}
+	return [ sommets, fils, pere, racine, etiquettes, liste_proteine ]
+
+def ajouter_sommet(A,s,pere_s,proteines,etiquette=None):
+	sommets,fils,pere,racine, ett, liste_proteine = A
+	if s in sommets:
+		raise ValueError ("Le sommet existe deja")
+	if not pere_s in sommets:
+		raise ValueError("Le pere n'existe pas dans l'arbre")
+
+	sommets.append(s)
+	fils[s] = []
+	fils[pere_s].append(s)
+	pere[s] = pere_s
+	ett[s] = etiquette
+	liste_proteine[s] = proteines
+
+def etiquette(A,f):
+	return A[4][f]
+
+def racine(A):
+	return A[3]
+
+def sommets(A):
+	return A[0]
+
+def fils(A,s):
+	return A[1][s]
+
+def pere(A,s):
+	if racine(A) == s:
+		return None
+
+	return A[2][s]
+
+def proteines(A,s):
+	return A[4][s]
+
+
+def afficher_arbre(A):
+
+	# Ouverture fichier
+	fichier = open("visualisation_arbre.dot", "w") 
+	
+	# Ecriture dans fichier
+	fichier.write("digraph G { graph [ ordering = ""out"" ];")
+
+	# Ecriture Racine
+	sommet = racine(A)
+	ett = etiquette(A,racine(A))
+	input0 = '{} [ label= "{}" ];'.format(sommet,ett)
+	fichier.write(input0)
+
+	# Ecriture tous les sommets
+	afficher_arbre_recc(A,racine(A),fichier)
+	fichier.write("}")
+
+	# Fermeture fichier
+	fichier.close()
+
+
+def afficher_arbre_recc(A,s,fichier):
+
+	for f in fils(A,s):
+		sommet = f
+		ett = etiquette(A,f)
+		input1 = '{} [ label= "{}" ];'.format(sommet,ett)
+		fichier.write(input1)
+
+		input2 = '{} -> {};'.format(pere(A,sommet),sommet)
+		fichier.write(input2)
+		afficher_arbre_recc(A,f,fichier)
+
+
+def contient_string(cluster):
+    try:
+    	for c in cluster:
+    		re.search(r"P*", c)
+        return True
+    except TypeError:
+        return False
+
+
+def construire_arbre(cluster):
+	A = creer_arbre_vide(0,cluster,"Cluster 0")
+	construire_arbre_recc(A, cluster, 0, 0)
+	return A
+
+def construire_arbre_recc(A, cluster, sommet, pere):
+	if contient_string(cluster) == True:
+		return None
+
+	for c in cluster:
+		s = 0
+		while s in sommets(A):
+			s = s + 1 
+
+		
+		label = "Cluster " + str(s)
+		ajouter_sommet(A, s, pere, c, label)
+		sommet = s
+		construire_arbre_recc(A, c, s, sommet)
+
+	return A
+
+def cluster_to_dico(cluster, cluster_nb):
+	
+	nb_prot, moyenne_mass, moyenne_length = statistics(cluster)
+	process_representatifs = retrieve_properties(cluster, "GoBiologicalProcess")
+	component_representatifs = retrieve_properties(cluster, "GoCellularComponent")
+	function_representatifs = retrieve_properties(cluster, "GoMolecularFunction")
+
+	dico[cluster_nb] = [ cluster, nb_prot, moyenne_mass, moyenne_length, process_representatifs, component_representatifs, function_representatifs ]
+
+
+clusters = [	
+				[
+					['P51561', 'p474418'], ['P84845', 'P84845']
+				], 
+				
+				[
+					['P84845'], 
+					['P84845', 'P84845', 'P84845', 'P84845']
+				]
+			]
 
 
 
@@ -296,6 +442,10 @@ table =
 
 ]
 """
+
+kmean = launch_kmeans(array_mass_length)
+
+"""
 for i in range(1,10):
 	k = i
 	kmean = launch_kmeans(array_mass_length)
@@ -304,6 +454,8 @@ for i in range(1,10):
 	for j in range(len(centroids)):
 		if centroids[j][0]<0 or centroids[j][1]<0:
 			print "ok"
+"""
+
 
 """
 centroids = 
@@ -323,13 +475,22 @@ label[i] is the code or index of the centroid the i’th observation is closest 
 
 """
 
+
 clusters_with_protein_name = retrieve_protein(table, clusters_with_nb)
+
 
 for i in range(len(clusters_with_protein_name)):
 	print "CLUSTER ", i
-	print "Nombre de protéines dans le cluster: ", statistics(clusters_with_protein_name[i])
-	print "Bio process: ", retrieve_properties(clusters_with_protein_name[i], "GoBiologicalProcess")
-	print "Cell comp: ", retrieve_properties(clusters_with_protein_name[i], "GoCellularComponent")
-	print "Mol function: ", retrieve_properties(clusters_with_protein_name[i], "GoMolecularFunction")
+	nb_prot, moyenne_mass, moyenne_length = statistics(clusters_with_protein_name[i])
+	print "Nombre de protéines dans le cluster: ", nb_prot
+	print "Moyenne des masses: ", moyenne_mass
+	print "Moyenne des longueurs: ", moyenne_length
+	print "Bio process: ", str(retrieve_properties(clusters_with_protein_name[i], "GoBiologicalProcess")).strip('[]')
+	print "Cell comp: ", str(retrieve_properties(clusters_with_protein_name[i], "GoCellularComponent")).strip('[]')
+	print "Mol function: ", str(retrieve_properties(clusters_with_protein_name[i], "GoMolecularFunction")).strip('[]')
 	print "\n\n"
+
+
+A = construire_arbre(clusters_with_protein_name)
+afficher_arbre(A)
 
