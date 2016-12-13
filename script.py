@@ -13,6 +13,8 @@ from scipy.cluster.vq import vq, kmeans2, whiten
 from scipy.cluster.hierarchy import linkage , fcluster, dendrogram#, cut_tree
 import matplotlib.pyplot as plt
 import json
+import re
+
 
 ######################################################
 # VARIABLES GLOBALES                                 #
@@ -203,6 +205,35 @@ def retrieve_protein(table, clusters_with_nb,k):
 	return clusters_with_name
 
 
+def retrieve_properties(un_cluster, param):
+
+    goProt = []
+    for prot in un_cluster:
+        goProt.append(data[prot][param])
+
+    result = set(goProt[0]).intersection(*goProt[:1])
+
+    return list(result)
+
+
+def statistics(cluster):
+	nb_prot = len(cluster)
+	somme_mass = 0
+	somme_length = 0
+	n = 0
+
+	for prot in cluster:
+
+		somme_mass = somme_mass + float(data[prot]['Mass'].replace(',','')) 
+		somme_length = somme_length + float(data[prot]['Length'].replace(',','')) 
+		n = n + 1
+
+	moyenne_mass = somme_mass / n
+	moyenne_length = somme_length / n
+
+	return nb_prot, moyenne_mass, moyenne_length
+
+
 
 
 ######################################################
@@ -308,10 +339,12 @@ def clusterWithGOTerm(clustered_data, GOcategory, GOterms, data):
         finalClusters = []
         for cl in clusterNames:
                 clProt = cluster_output[cluster_output.cluster == cl]["prot"].values
-                finalClusters.append(clProt)
+                finalClusters.append(clProt.tolist())
 
         #print finalClusters, "\n----------------------"
         return finalClusters
+
+
 
 
 ######################################################
@@ -380,26 +413,31 @@ for i in range(len(cluster_with_protein_name)):
                 #on ajoute un tableau dans le tableau du premier niveau pour chaque cluster du deuxième niveau
                 clustersTree[i].append([])
 
-                lvl2 = clusterWithGOTerm(lvl1[j], "GoBiologicalProcess",go_bio, data)
+                lvl2 = clusterWithGOTerm(lvl1[j], "GoMolecularFunction",go_bio, data)
 
                 for k in range(len(lvl2)):
                         
-                        lvl3 = clusterWithGOTerm(lvl2[k], "GoMolecularFunction",go_mol, data)
+                        lvl3 = clusterWithGOTerm(lvl2[k], "GoBiologicalProcess",go_mol, data)
         
                         clustersTree[i][j].append(lvl3)
 
 
 
 # Visualisation d'une partie des résultats:
-
-for i in range(len(clustersTree[0])):
-        print "UN CLUSTER COMMENCE.."
-        for j in range(len(clustersTree[0][i])):
-                print "Un cluster dans le cluster"
-                for k in range(len(clustersTree[0][i][j])):
-                        print "un cluster dans le cluster dans le cluster"
-                        print clustersTree[0][i][j][k]
-  
+x = 0
+dico_arbre = {}
+for i in range(len(clustersTree)):
+    print "UN CLUSTER COMMENCE.."
+    for j in range(len(clustersTree[i])):
+        print "Un cluster dans le cluster"
+        for k in range(len(clustersTree[i][j])):
+            for f in range(len(clustersTree[i][j][k])):
+                print "un cluster dans le cluster dans le cluster"
+                #print clustersTree[i][j][k]
+                nb = str(i) + " " + str(j) + " " + str(k) + " " + str(f)
+                dico_arbre[nb] = clustersTree[i][j][k][f]
+                x+= len(clustersTree[i][j][k][f])
+                
 
 
 """"
@@ -409,5 +447,29 @@ with open("clustersTree.json", "w") as outfile:
 
 print("file saved")
 
-"""                     
+"""       
 
+"""
+for i in range(len(clustersTree)):
+	print "CLUSTER ", i
+	#nb_prot, moyenne_mass, moyenne_length = statistics(clustersTree[i])
+	#print "Nombre de protéines dans le cluster: ", nb_prot
+	#print "Moyenne des masses: ", moyenne_mass
+	#print "Moyenne des longueurs: ", moyenne_length
+	print "Bio process: ", str(retrieve_properties(clustersTree[i], "GoBiologicalProcess")).strip('[]')
+	print "Cell comp: ", str(retrieve_properties(clustersTree[i], "GoCellularComponent")).strip('[]')
+	print "Mol function: ", str(retrieve_properties(clustersTree[i], "GoMolecularFunction")).strip('[]')
+	print "\n\n"
+"""
+
+for num_cluster, cluster in dico_arbre.items():
+    print "CLUSTER ", num_cluster
+    #nb_prot, moyenne_mass, moyenne_length = statistics(clustersTree[i])
+    #print "Nombre de protéines dans le cluster: ", nb_prot
+    #print "Moyenne des masses: ", moyenne_mass
+    #print "Moyenne des longueurs: ", moyenne_length
+    print "Bio process: ", str(retrieve_properties(cluster, "GoBiologicalProcess"))
+    print "Cell comp: ", str(retrieve_properties(cluster, "GoCellularComponent"))
+    print "Mol function: ", str(retrieve_properties(cluster, "GoMolecularFunction"))
+    print "nombre de proteines: ",len(cluster)
+    print "\n\n"
