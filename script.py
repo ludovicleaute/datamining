@@ -427,12 +427,12 @@ for i in range(len(cluster_with_protein_name)):
 x = 0
 dico_arbre = {}
 for i in range(len(clustersTree)):
-    print "UN CLUSTER COMMENCE.."
+    #print "UN CLUSTER COMMENCE.."
     for j in range(len(clustersTree[i])):
-        print "Un cluster dans le cluster"
+        #print "Un cluster dans le cluster"
         for k in range(len(clustersTree[i][j])):
             for f in range(len(clustersTree[i][j][k])):
-                print "un cluster dans le cluster dans le cluster"
+                #print "un cluster dans le cluster dans le cluster"
                 #print clustersTree[i][j][k]
                 nb = str(i) + " " + str(j) + " " + str(k) + " " + str(f)
                 dico_arbre[nb] = clustersTree[i][j][k][f]
