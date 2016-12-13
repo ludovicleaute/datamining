@@ -1,3 +1,4 @@
+
 # -*- encoding: utf-8 -*-
 # ** PROJET DATA MINING
 # ** L.Leaute A.Souvane K.Kastano J.Estebeteguy
@@ -13,8 +14,6 @@ from scipy.cluster.vq import vq, kmeans2, whiten
 from scipy.cluster.hierarchy import linkage , fcluster, dendrogram#, cut_tree
 import matplotlib.pyplot as plt
 import json
-import re
-
 
 ######################################################
 # VARIABLES GLOBALES                                 #
@@ -63,7 +62,6 @@ def representativity():
 ###################################################### 
 '''On implemente un dictionnaire qui contient en entrees toutes les proteines.
 chaque prot est un dictionnaire contenant les valeurs de chaque parametre
-
 { 
   
   PROT1 : { 'Length': '397', 'Mass': '45,318', 'GoBiologicalProcess':
@@ -72,10 +70,8 @@ chaque prot est un dictionnaire contenant les valeurs de chaque parametre
             [GO:0005737]'], 'GOMolecularFunction':
             ['6-phosphofructo-2-kinase activity [GO:0003873]', 'ATP
             binding [GO:0005524]'] ,
-
   PROT2 : { ... }
 }
-
 '''
 
 def get_datas():
@@ -205,34 +201,19 @@ def retrieve_protein(table, clusters_with_nb,k):
 	return clusters_with_name
 
 
+
 def retrieve_properties(un_cluster, param):
 
-    goProt = []
-    for prot in un_cluster:
-        goProt.append(data[prot][param])
+	if un_cluster == []:
+		return []
 
-    result = set(goProt[0]).intersection(*goProt[:1])
+	goProt = []
+	for prot in un_cluster:
+		goProt.append(data[prot][param])
 
-    return list(result)
+	result = set(goProt[0]).intersection(*goProt[:1])
 
-
-def statistics(cluster):
-	nb_prot = len(cluster)
-	somme_mass = 0
-	somme_length = 0
-	n = 0
-
-	for prot in cluster:
-
-		somme_mass = somme_mass + float(data[prot]['Mass'].replace(',','')) 
-		somme_length = somme_length + float(data[prot]['Length'].replace(',','')) 
-		n = n + 1
-
-	moyenne_mass = somme_mass / n
-	moyenne_length = somme_length / n
-
-	return nb_prot, moyenne_mass, moyenne_length
-
+	return list(result)
 
 
 
@@ -293,58 +274,56 @@ def go_representativite(dico,go_type,go_list):
 ######################################################
         
 def clusterWithGOTerm(clustered_data, GOcategory, GOterms, data):
-        """
-        data: la structure de données initiale qui contient toutes les infos sur les protéines
-        clustered_data: un cluster obtenu d'un clustering précedant, 
-        c'est un tableau avec le noms de protéines qui font partie du cluster:
-        ["prot1", "prot2", ..., "protn"]
-        G0category: le nom de la catégorie GO utilisée
-        GOterms: les termes récuperés du fichier de données initial
+    """
+    data: la structure de données initiale qui contient toutes les infos sur les protéines
+    clustered_data: un cluster obtenu d'un clustering précedant, 
+    c'est un tableau avec le noms de protéines qui font partie du cluster:
+    ["prot1", "prot2", ..., "protn"]
+    G0category: le nom de la catégorie GO utilisée
+    GOterms: les termes récuperés du fichier de données initial
+    
+    Retourne: un tableau qui contient plusieurs tableaux qui correspondent à 
+    tous les clusters des protéines produits:
+    [["prot1,"prot2",...], ["prot3", "prot4", ...], ...]
+    """
+    if len(clustered_data) < 2:
+        return []                
+    
+    scoresMat = []
+    for protein in clustered_data:
+        row =[]
+        for goterm in GOterms:
+            if goterm in data[protein][GOcategory]: 
+                row.append(1.0)
+            else:
+                row.append(0.0)
+        scoresMat.append(row)
+
+    #print "\nmatrice created successfully\n"
+
+    dist = linkage(scoresMat,'complete')
         
-        Retourne: un tableau qui contient plusieurs tableaux qui correspondent à 
-        tous les clusters des protéines produits:
-        [["prot1,"prot2",...], ["prot3", "prot4", ...], ...]
-        """
-        if len(clustered_data) < 2:
-                return []                
-        
-        scoresMat = []
-        for protein in clustered_data:
-	        row =[]
-   	        for goterm in GOterms:
-   		        if goterm in data[protein][GOcategory]: 
-			        row.append(1.0)
-		        else:
-			        row.append(0.0)
-	        scoresMat.append(row)
+    # Tableau avec le numero du cluster auquel chaque protéine initiale appartient
+    flatClusters = fcluster(dist,3,'distance')
+    
 
-        #print "\nmatrice created successfully\n"
+    #cluster_output: un dataFrame avec une colonne protein qui contient toutes les protéines et une colonne cluster qui contient le numéro du cluster qui correspond à chacune de protéines
+    cluster_output = pd.DataFrame({'prot':clustered_data, 'cluster':flatClusters})
 
-        dist = linkage(scoresMat,'complete')
+    # Avoir tous les différents clusters
+    clusterNames = []
+    for cl in flatClusters:
+        if cl not in clusterNames:
+            clusterNames.append(cl)
 
-        # Tableau avec le numero du cluster auquel chaque protéine initiale appartient
-        flatClusters = fcluster(dist,3,'distance')
+    # Selectionner les protéines pour chaque cluster
+    finalClusters = []
+    for cl in clusterNames:
+        clProt = cluster_output[cluster_output.cluster == cl]["prot"] .values
+        finalClusters.append(clProt.tolist())
 
-
-        #cluster_output: un dataFrame avec une colonne protein qui contient toutes les protéines et une colonne cluster qui contient le numéro du cluster qui correspond à chacune de protéines
-        cluster_output = pd.DataFrame({'prot':clustered_data, 'cluster':flatClusters})
-
-        # Avoir tous les différents clusters
-        clusterNames = []
-        for cl in flatClusters:
-                if cl not in clusterNames:
-                        clusterNames.append(cl)
-
-        # Selectionner les protéines pour chaque cluster
-        finalClusters = []
-        for cl in clusterNames:
-                clProt = cluster_output[cluster_output.cluster == cl]["prot"].values
-                finalClusters.append(clProt.tolist())
-
-        #print finalClusters, "\n----------------------"
-        return finalClusters
-
-
+    #print finalClusters, "\n----------------------"
+    return finalClusters
 
 
 ######################################################
@@ -369,22 +348,16 @@ for i in range(k):
 # Un peu de visualisation 
 dat = pd.DataFrame(whiten(array_mass_length))	
 coord = dat.as_matrix(columns=[0,1])
-
-
 plt.figure(figsize=(10, 10), dpi=100)
 plt.scatter(coord[:,0], coord[:,1], c=clusterIndex, s=25, cmap="winter")
 plt.scatter(centroids[:,0],centroids[:,1],c="r",s=50)
 plt.show()
-
 # representativite des goterms
 gterms,gt = go_representativite(data,"GoCellularComponent",go_cell)
-
 print "\nGo-Terms representativity :\n"
-
 for k,v in gt[:5]:
     print k 
     print v,"%"
-
 print "\n"
 '''
   
@@ -400,76 +373,91 @@ DIANA:
 Résultat: des clusters dans des clusters dans des clusters...
 """
 
+class treeNode:
+	def __init__(self, _name, _proteins):
+		self.name = _name
+		self.proteins = _proteins
+		self.children = []
+		self.go_bio = retrieve_properties(self.proteins, "GoBiologicalProcess")
+		self.go_cell = retrieve_properties(self.proteins, "GoCellularComponent")
+		self.go_mol = retrieve_properties(self.proteins, "GoMolecularFunction")
+
+	def print_cluster(self):
+		print "--------------------------"
+		print "Cluster", self.name
+		print "Proteins", self.proteins
+		#print "Termes bio", go_bio
+		#print "Termes cell component", go_cell
+		#print "Termes mol function", go_mol
+		print "--------------------------"	
+
+
+
 clustersTree = [] # contiendra les résultats finaux du clustering
 
+root = treeNode("data", data.keys())
+
 for i in range(len(cluster_with_protein_name)):
-        #on ajoute un tableau pour chaque cluster du premier niveau
-        clustersTree.append([])
-        
-        lvl1 = clusterWithGOTerm(cluster_with_protein_name[i], "GoCellularComponent", go_cell, data)
-        
 
-        for j in range(len(lvl1)):
-                #on ajoute un tableau dans le tableau du premier niveau pour chaque cluster du deuxième niveau
-                clustersTree[i].append([])
 
-                lvl2 = clusterWithGOTerm(lvl1[j], "GoMolecularFunction",go_bio, data)
+	lvl1 = clusterWithGOTerm(cluster_with_protein_name[i], "GoCellularComponent", go_cell, data)
+	
+	node = treeNode(str(i), cluster_with_protein_name[i])
+	root.children.append(node)
 
-                for k in range(len(lvl2)):
+	clustersTree.append([])
+       
+	for j in range(len(lvl1)):
+	
+		lvl2 = clusterWithGOTerm(lvl1[j], "GoMolecularFunction" ,go_mol, data)
+            
+		index = str(i)+"."+str(j)
+		node = treeNode(index, lvl1[j])
+		root.children[i].children.append(node)	
+
+
+		clustersTree[i].append([])
+
+               
+		for k in range(len(lvl2)):
+			lvl3 = clusterWithGOTerm(lvl2[k], "GoBiologicalProcess",go_bio, data) 
+
+			index = str(i)+"."+str(j)+"."+str(k)
+			node = treeNode(index, lvl2[k])
+			root.children[i].children[j].children.append(node)
+
+			for l in range(len(lvl3)):
+				index = str(i)+"."+str(j)+"."+str(k)+"."+str(l)
+				node = treeNode(index, lvl3[l])
+				root.children[i].children[j].children[k].children.append(node)
                         
-                        lvl3 = clusterWithGOTerm(lvl2[k], "GoBiologicalProcess",go_mol, data)
-        
-                        clustersTree[i][j].append(lvl3)
+			clustersTree[i][j].append(lvl3)
 
+for i in root.children:
+	#i.print_cluster()
+	for j in i.children:
+		#j.print_cluster()
+		for k in j.children:
+			k.print_cluster()
+			for l in k.children:
+				pass
+				#l.print_cluster()
 
 
 # Visualisation d'une partie des résultats:
-x = 0
-dico_arbre = {}
-for i in range(len(clustersTree)):
-    #print "UN CLUSTER COMMENCE.."
-    for j in range(len(clustersTree[i])):
-        #print "Un cluster dans le cluster"
-        for k in range(len(clustersTree[i][j])):
-            for f in range(len(clustersTree[i][j][k])):
-                #print "un cluster dans le cluster dans le cluster"
-                #print clustersTree[i][j][k]
-                nb = str(i) + " " + str(j) + " " + str(k) + " " + str(f)
-                dico_arbre[nb] = clustersTree[i][j][k][f]
-                x+= len(clustersTree[i][j][k][f])
-                
+"""
+for i in range(len(clustersTree[0])):
+        print "UN CLUSTER COMMENCE.."
+        for j in range(len(clustersTree[0][i])):
+			print "Un cluster dans le cluster"
+			for k in range(len(clustersTree[0][i][j])):
+				print "un cluster dans le cluster dans le cluster"
+				print clustersTree[0][i][j][k]
+  
+"""
 
-
-""""
-# Ne marche pas à cause de l'array issu de DataFrame avec .values :/
-with open("clustersTree.json", "w") as outfile:
+"""
+with open("results.json", "w") as outfile:
     json.dump(clustersTree, outfile)
-
 print("file saved")
-
-"""       
-
-"""
-for i in range(len(clustersTree)):
-	print "CLUSTER ", i
-	#nb_prot, moyenne_mass, moyenne_length = statistics(clustersTree[i])
-	#print "Nombre de protéines dans le cluster: ", nb_prot
-	#print "Moyenne des masses: ", moyenne_mass
-	#print "Moyenne des longueurs: ", moyenne_length
-	print "Bio process: ", str(retrieve_properties(clustersTree[i], "GoBiologicalProcess")).strip('[]')
-	print "Cell comp: ", str(retrieve_properties(clustersTree[i], "GoCellularComponent")).strip('[]')
-	print "Mol function: ", str(retrieve_properties(clustersTree[i], "GoMolecularFunction")).strip('[]')
-	print "\n\n"
-"""
-
-for num_cluster, cluster in dico_arbre.items():
-    print "CLUSTER ", num_cluster
-    #nb_prot, moyenne_mass, moyenne_length = statistics(clustersTree[i])
-    #print "Nombre de protéines dans le cluster: ", nb_prot
-    #print "Moyenne des masses: ", moyenne_mass
-    #print "Moyenne des longueurs: ", moyenne_length
-    print "Bio process: ", str(retrieve_properties(cluster, "GoBiologicalProcess"))
-    print "Cell comp: ", str(retrieve_properties(cluster, "GoCellularComponent"))
-    print "Mol function: ", str(retrieve_properties(cluster, "GoMolecularFunction"))
-    print "nombre de proteines: ",len(cluster)
-    print "\n\n"
+   """        
