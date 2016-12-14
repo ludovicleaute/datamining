@@ -433,31 +433,58 @@ for i in range(len(cluster_with_protein_name)):
                         
 			clustersTree[i][j].append(lvl3)
 
+##############################################################
+# Création de fichiers pour la visualisation sur Cytoscape
+#
+# Comment faire la visualization:
+#
+# 1. Faites import network > tree.tab et dans la table qui 
+# apparaît cliquez sur parent et choisissez Source node.
+# De la même manière choissez target node pour child.
+# Ceci peut permettre de créer un réseau orienté et changer
+# le layout en hierarchic.
+#
+# 2. Faites import table > extra_info.tab
+# Quand vous cliquez sur un noeud vous pouvez maintenant voir 
+# la liste des protéines du noeud !
+#
+##############################################################
+
+fic = open("tree.tab","w")
+fic_info = open("extra_info.tab", "w")
+fic.write("parent\tinteraction\tchild\n")
+fic_info.write("id\tproteins\n")
+
 for i in root.children:
 	#i.print_cluster()
+	fic.write("root\tchild\t"+i.name+"\n")
+	
+	
 	for j in i.children:
 		#j.print_cluster()
+		fic.write(i.name+"\tchild\t"+j.name+"\n")
+		prot_string = ""
+		for p in j.proteins:
+			prot_string += p+", "
+		fic_info.write(j.name+"\t"+prot_string+"\n")
+		
+		
 		for k in j.children:
-			k.print_cluster()
+			fic.write(j.name+"\tchild\t"+k.name+"\n")
+			#k.print_cluster()
+			prot_string = ""
+			for p in k.proteins:
+				prot_string += p+", "
+			fic_info.write(k.name+"\t"+prot_string+"\n")
+			
+
 			for l in k.children:
-				pass
+				fic.write(k.name+"\tchild\t"+l.name+"\n")
 				#l.print_cluster()
+				prot_string = ""
+				for p in l.proteins:
+					prot_string += p+", "
+				fic_info.write(l.name+"\t"+prot_string+"\n")
 
-
-# Visualisation d'une partie des résultats:
-"""
-for i in range(len(clustersTree[0])):
-        print "UN CLUSTER COMMENCE.."
-        for j in range(len(clustersTree[0][i])):
-			print "Un cluster dans le cluster"
-			for k in range(len(clustersTree[0][i][j])):
-				print "un cluster dans le cluster dans le cluster"
-				print clustersTree[0][i][j][k]
-  
-"""
-
-"""
-with open("results.json", "w") as outfile:
-    json.dump(clustersTree, outfile)
-print("file saved")
-   """        
+fic.close()
+fic_info.close()
