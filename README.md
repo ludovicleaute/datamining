@@ -1,7 +1,7 @@
 # Projet de Datamining 
 
-Ce projet est réalisé par Kristina Kastano, Julien Estebeteguy, Alexia Souvane et Ludovic Léauté
-L'objectif est de répondre à la question très générales :  quelles sont les protéines semblables ?
+Ce projet est réalisé par Kristina Kastano, Julien Estebeteguy, Alexia Souvane et Ludovic Léauté</br>
+L'objectif est de répondre à la question très générales :  quelles sont les protéines semblables ?</br>
 Pour y parvenir nous avons travaillé sur des données issues de la bdd en ligne Swissprot.
 
 Le projet est écrit en python 2.7.
