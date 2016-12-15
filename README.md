@@ -16,9 +16,9 @@ Nb sera le nombre de clusters choisi pour le clustering de k-means.
 Le dernier chiffre (optionel) indique si vous voulez une visualization des résultats sur la console.
 <li>Après l'éxecution vous pourrez utilisez les deux fichiers tab créés pour visualiser les résultats sur Cytoscape:
 	<ul>
-	<il> Importez le fichier results.tab (File > import > network)</il>
-	<il> Vous pouvez changer le layout en Organic pour une visualization plus claire</il>
-	<il> Importez le fichier extra_info.tab (File > import > table) pour integrez les informations sur chaque noeud du réseau. </il>
-	<il> La visualization est prête ! Vous pouvez cliquer sur un noeud pour voir les informations pertinantes affichées en bas.</il>
+	<li> Importez le fichier results.tab (File > import > network)</li>
+	<li> Vous pouvez changer le layout en Organic pour une visualization plus claire</li>
+	<li> Importez le fichier extra_info.tab (File > import > table) pour integrez les informations sur chaque noeud du réseau. </li>
+	<li> La visualization est prête ! Vous pouvez cliquer sur un noeud pour voir les informations pertinantes affichées en bas.</li>
 	</ul>
 </ul>
