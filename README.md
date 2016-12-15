@@ -10,9 +10,9 @@ Le projet est écrit en python 2.7.
 
 <ul>
 <li>Prenez bien soins d'installer les différents packages de python nécessaires et détaillés au début du fichier script.py</li>
-<li>Pour réaliser le clustering executez dans un terminal la commande :
-> python script.py [fichier.tab] [nb] [1]
-Nb sera le nombre de clusters choisi pour le clustering de k-means.
+<li>Pour réaliser le clustering executez dans un terminal la commande :</br>
+> python script.py [fichier.tab] [nb] [1]</br>
+Nb sera le nombre de clusters choisi pour le clustering de k-means.</br>
 Le dernier chiffre (optionel) indique si vous voulez une visualization des résultats sur la console.
 <li>Après l'éxecution vous pourrez utilisez les deux fichiers tab créés pour visualiser les résultats sur Cytoscape:
 	<ul>
