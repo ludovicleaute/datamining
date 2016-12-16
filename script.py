@@ -210,9 +210,9 @@ def retrieve_protein(table, clusters_with_nb,k):
 
 
 
-def retrieve_properties(un_cluster, param):
+def retrieve_properties(un_cluster, go_category):
 	"""
-	Récupere le parametre param qui est en commun pour toutes les protéines
+	Récupere le terme GO de la catégorie donnée qui est en commun pour toutes les protéines
 	presentes dans un_cluster
 	"""
 	if un_cluster == []:
@@ -220,12 +220,30 @@ def retrieve_properties(un_cluster, param):
 
 	goProt = []
 	for prot in un_cluster:
-		goProt.append(data[prot][param])
+		goProt.append(data[prot][go_category])
 
 	result = set(goProt[0]).intersection(*goProt[:1])
 
 	return list(result)
 
+
+
+def statistics(cluster):
+	nb_prot = len(cluster.proteins)
+	mass_sum = 0
+	length_sum = 0
+	n = 0
+
+	for prot in cluster.proteins:
+
+		mass_sum = mass_sum + data[prot]['Mass']
+		length_sum = length_sum + data[prot]['Length']
+		n = n + 1
+
+	mass_mean = mass_sum / n
+	length_mean = length_sum / n
+
+	return nb_prot, mass_mean, length_mean
 
 
 ######################################################
@@ -380,14 +398,19 @@ def write_cluster_info_in_file(fic, fic_info, cluster, cluster_parent):
 	fic_info.write(go_mol_string+"\t")
 
 	go_bio_string = stringify(cluster.go_bio)
-	fic_info.write(go_bio_string+"\n")
+	fic_info.write(go_bio_string+"\t")
+
+	nb_prot, mass_mean, length_mean = statistics(cluster)
+	fic_info.write(str(nb_prot)+"\t"+str(mass_mean)+"\t"+str(length_mean))
+
+	fic_info.write("\n")
 
 def create_cytoscape_files(root):
 
 	fic = open("results.tab","w")
 	fic_info = open("extra_info.tab", "w")
 	fic.write("cluster1\tinteraction\tcluster2\n")
-	fic_info.write("id\tproteins\tgo_cell\tgo_mol\tgo_bio\n")
+	fic_info.write("id\tproteins\tgo_cell\tgo_mol\tgo_bio\tnb_proteins\tmass_mean\tlength_mean\n")
 
 	for i in root.children:
 
@@ -486,7 +509,7 @@ for i in range(len(kmeans_protein_clusters)):
                         
 			clusters_tree[i][j].append(lvl3)
 
-
+print "Clustering fini."
 create_cytoscape_files(root)
 if (len(sys.argv)==4 and sys.argv[3] == "1"):
 	print "1"
