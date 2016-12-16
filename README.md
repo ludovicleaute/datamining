@@ -14,7 +14,10 @@ Le projet est écrit en python 2.7.
 > python script.py [fichier.tab] [nb] [1]</br>
 fichier.tab est le fichier avec les protéines
 Nb sera le nombre de clusters choisi pour le clustering de k-means.</br>
-Le dernier chiffre (optionel) indique si vous voulez une visualization des résultats sur la console.
+Le dernier chiffre (optionel) indique si vous voulez une visualization des résultats sur la console.</br>
+Exemple: python script.py homosapiens.tab 20
+</li>
+
 <li>Après l'éxecution vous pourrez utilisez les deux fichiers tab créés pour visualiser les résultats sur Cytoscape:
 	<ul>
 	<li> Importez le fichier results.tab (File > import > network > file). Choisez le cluster1 comme Source node et le cluster2 comme Target node</li>
