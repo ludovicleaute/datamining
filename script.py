@@ -215,6 +215,23 @@ def retrieve_properties(un_cluster, param):
 
 	return list(result)
 
+def statistics(cluster):
+	nb_prot = len(cluster)
+	somme_mass = 0
+	somme_length = 0
+	n = 0
+
+	for prot in cluster:
+
+		somme_mass = somme_mass + float(data[prot]['Mass'].replace(',','')) 
+		somme_length = somme_length + float(data[prot]['Length'].replace(',','')) 
+		n = n + 1
+
+	moyenne_mass = somme_mass / n
+	moyenne_length = somme_length / n
+
+	return nb_prot, moyenne_mass, moyenne_length
+
 
 
 ######################################################
